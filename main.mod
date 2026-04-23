@@ -1,4 +1,4 @@
-set V;                 # venues
+set V ordered;         # venues (ordered so ord() is valid)
 set S;                 # sports
 set T;                 # weeks
 
