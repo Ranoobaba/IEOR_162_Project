@@ -1,0 +1,11 @@
+model project.mod;
+data project.dat;
+option solver cplex;
+solve;
+
+display x;
+display y;
+display z;
+display sold;
+display b;
+display extra;
