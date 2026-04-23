@@ -10,6 +10,9 @@ Run with: `source .venv/bin/activate && python run_all.py`.
 | 2 | `task2.mod` | `task2.dat` | **2,850** fixed cost |
 | 3 | `task3.mod` | `main.dat`  | **270** net cost |
 | 4 | `task4.mod` | `main.dat`  | **100** net cost |
+| 5 | `task5.mod` | `main.dat`  | sensitivity (see Task 5) |
+
+Task 5 is run with `python run_task5.py`.
 
 ---
 
@@ -166,6 +169,93 @@ Each venue is in at most one bus network, as required.
 
 ---
 
+## Task 5 — Sensitivity Analysis
+
+**Goal:** See how sensitive the Task 4 optimum is to (1) cutting profit
+per ticket from $10 to $5, (2) raising it to $15, and (3) demand being
+overestimated by 10% (true demand = 0.9 × D). Also evaluate how
+sub-optimal each scenario's solution is when applied to the others.
+
+**Model:** `task5.mod` is Task 4 parameterized by `p` (profit per
+thousand tickets) and `demand_factor` (multiplier on D[j]). Everything
+else is identical to `task4.mod`.
+
+### Scenario optima
+
+| Scen. | Settings | Objective ($K) | Venues | Bus pairs |
+|---|---|---|---|---|
+| **A** baseline | p=10, df=1.0 | **+100.00** | V1, V2, V3, V6, V7, V8, V9, V10 | V1↔V3, V2↔V6, V7↔V8, V9↔V10 |
+| **B** low profit | p=5,  df=1.0 | **+1,504.00** | same 8 venues | V1↔V3, V2↔V6 (only 2) |
+| **C** high profit | p=15, df=1.0 | **−1,315.00** | same 8 venues | V1↔V3, V2↔V6, V7↔V8, V9↔V10 |
+| **D** demand −10% | p=10, df=0.9 | **+363.20** | same 8 venues | V1↔V3, V2↔V9, V6↔V8, V7↔V10 |
+
+### Cross-evaluation matrix
+
+Rows = decision set (x, y, z, b) from scenario X. Columns = evaluation
+under scenario Y's economics (p, demand_factor), solving only for the
+continuous sold / extra variables. Diagonal equals each scenario's own
+optimum.
+
+| Decisions \ Scenario | A ($K) | B ($K) | C ($K) | D ($K) |
+|---|---|---|---|---|
+| **A** | **+100.00** | +1,515.00 | **−1,315.00** | **+363.20** |
+| **B** | +118.00 | **+1,504.00** | −1,268.00 | +376.20 |
+| **C** | +100.00 | +1,515.00 | **−1,315.00** | +363.20 |
+| **D** | +100.00 | +1,515.00 | −1,315.00 | **+363.20** |
+
+### Sub-optimality gaps (decision row − column optimum)
+
+| Decisions \ Scenario | A | B | C | D |
+|---|---|---|---|---|
+| A | 0 | **+11** | 0 | 0 |
+| B | **+18** | 0 | **+47** | **+13** |
+| C | 0 | +11 | 0 | 0 |
+| D | 0 | +11 | 0 | 0 |
+
+### Findings
+
+1. **Facility selection is invariant.** All four scenarios open the
+   *same* 8 venues (V1, V2, V3, V6, V7, V8, V9, V10). Fixed costs
+   ($2,850K) dominate the open/close decision; changing the
+   ticket-profit rate or shaving demand by 10% is not enough to
+   justify opening a cheaper venue or dropping one of these.
+
+2. **The bus network is the only decision that moves.**
+   - Under **B** (low profit), bus pairs **V7↔V8** and **V9↔V10** are
+     dropped. Those pairs generate only ≈2.7K and ≈3.2K extras; at $5
+     profit that's $13.5K and $16K of revenue, both below the $20K
+     setup cost. V1↔V3 (11K extras) and V2↔V6 (8.1K extras) remain
+     profitable at $5.
+   - **C** keeps A's exact bus set — at $15 profit, every existing
+     pair pays back its $20K many times over, and no additional
+     pairings are unlocked (one-network-per-venue is already binding).
+   - **D**'s optimum uses a *different* 4-pair configuration
+     (V1↔V3, V2↔V9, V6↔V8, V7↔V10) that the solver found yields the
+     same uplift under both 0.9D and baseline demand. This is a
+     degenerate optimum — A's and D's configurations are
+     interchangeable at the baseline.
+
+3. **A is the most robust decision.** Applying A's solution in B, C,
+   or D costs at most **+$11K** over the scenario's own optimum
+   (only B hurts, and only slightly). A's solution is *already*
+   optimal under C and under D.
+
+4. **B is the least robust decision.** Applying B's 2-pair solution
+   under the baseline costs **+$18K**, under high profit **+$47K**,
+   and under shrunken demand **+$13K**. The $40K of skipped bus
+   setup in B is a big miss whenever profit rises back to $10 or
+   higher.
+
+5. **Interpretation for the Committee.** If there is any upside risk
+   to ticket profitability or downside risk to demand assumptions,
+   the committee should simply **adopt the Task 4 plan (A)** — it is
+   optimal at $10 and $15 profit, optimal under a 10% demand haircut,
+   and only slightly suboptimal at $5. Declining to open V7↔V8 and
+   V9↔V10 only pays off if the committee becomes highly confident
+   that ticket margin has permanently halved.
+
+---
+
 ## Cross-Task Summary
 
 | Metric | Task 1 | Task 2 | Task 3 | Task 4 |
@@ -177,3 +267,12 @@ Each venue is in at most one bus network, as required.
 | Bus setup cost ($K) | — | — | — | 80 |
 | **Net objective ($K)** | **1,800** | **2,850** | **270** | **100** |
 | Total tickets (thousands) | — | — | 258 | 283 |
+
+### Task 5 scenario summary
+
+| Scenario | Δ vs. A ($K) | Venues changed? | Bus changes vs. A |
+|---|---|---|---|
+| A baseline | — | — | — |
+| B low profit | +1,404 | no | drops V7↔V8 and V9↔V10 |
+| C high profit | −1,415 | no | identical |
+| D demand −10% | +263 | no | rewires to a different but equivalent 4-pair set |
