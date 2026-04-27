@@ -22,7 +22,7 @@
 #       ExtraOnlyIfDestActive, ExtraTicketCap (10% rule)
 # =========================================================
 
-set V;                       # candidate venues (V1..V10)
+set V ordered;               # candidate venues (V1..V10) — ordered so ord() is usable
 set S;                       # Olympic sports (S1..S15)
 set T;                       # weeks of the Games
 
