@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .DS_Store
+run_task5_*.run
+build_task5_pdf.py
+screenshots_results/
